@@ -9,6 +9,10 @@ public abstract class MoveBaseSO : ScriptableObject
     public string moveName;
     public string moveNameCN;
     public int pp;
+    
+    public int range;
+    public TargetType targetType;
+    public Target target;
 
     [Header("Additional Effects")]
     public List<MoveEffectSO> additionalEffects;

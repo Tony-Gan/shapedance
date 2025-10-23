@@ -16,11 +16,12 @@ MonoBehaviour:
   moveName: Tackle
   moveNameCN: "\u649E\u51FB"
   pp: 10
+  range: 5
+  targetType: 0
+  target: 3
   additionalEffects: []
   attackType: 0
   elementType: 1
-  power: 30
-  accuracy: 100
+  power: 40
+  accuracyLevel: 0
   criticalLevel: 0
-  range: 5
-  targetType: 0

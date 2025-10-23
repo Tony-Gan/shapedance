@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 1 - Bulbasaur
   m_EditorClassIdentifier: Assembly-CSharp::Pokemon
   pokedexNumber: 1
-  monsterName: Bulbasaur
-  monsterNameCN: "\u5999\u86D9\u79CD\u5B50"
+  pokemonName: Bulbasaur
+  pokemonNameCN: "\u5999\u86D9\u79CD\u5B50"
   type1: 4
   type2: 0
   baseHP: 45

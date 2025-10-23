@@ -42,6 +42,15 @@ public enum TargetType
     Circle
 }
 
+public enum Target
+{
+    Self,
+    Space,
+    Ally,
+    Enemy,
+    Creature
+}
+
 public enum StatusCondition
 {
     None,

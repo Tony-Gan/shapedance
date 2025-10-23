@@ -11,6 +11,4 @@ public class AttackMoveSO : MoveBaseSO
     public int accuracyLevel = 0;
     [Range(0, 6)]
     public int criticalLevel = 0;
-    public int range;
-    public TargetType targetType;
 }

@@ -128,7 +128,7 @@ public class PokemonStats : MonoBehaviour
 
         if (string.IsNullOrEmpty(alias))
         {
-            alias = pokemon.monsterNameCN;
+            alias = pokemon.pokemonNameCN;
         }
 
         RecalculateStats();

@@ -10,6 +10,8 @@ public class MovesDisplayUI : MonoBehaviour
     [Header("UI Container")]
     public Transform buttonContainer; 
 
+    private PokemonStats currentSelectedPokemon;
+
     void Start()
     {
         SelectionManager.OnSelectionChanged += HandleSelectionChanged;
@@ -23,12 +25,12 @@ public class MovesDisplayUI : MonoBehaviour
 
     private void HandleSelectionChanged(DraggableItem selectedItem)
     {
-        PokemonStats stats = null;
+        currentSelectedPokemon = null;
         if (selectedItem != null)
         {
-            stats = selectedItem.GetComponent<PokemonStats>();
+            currentSelectedPokemon = selectedItem.GetComponent<PokemonStats>();
         }
-        UpdateMoveButtons(stats);
+        UpdateMoveButtons(currentSelectedPokemon);
     }
 
     private void UpdateMoveButtons(PokemonStats pokemon)
@@ -57,13 +59,21 @@ public class MovesDisplayUI : MonoBehaviour
 
             if (buttonText != null)
             {
-                buttonText.text = move.moveNameCN; 
+                buttonText.text = move.moveNameCN;
             }
 
-            string moveNameForPrint = move.moveNameCN; 
+            MoveBaseSO currentMove = move;
+            
             Button button = buttonGO.GetComponent<Button>();
             button.onClick.AddListener(() => {
-                Debug.Log("点击了招式: " + moveNameForPrint);
+                if (TargetingManager.Instance != null && currentSelectedPokemon != null)
+                {
+                    TargetingManager.Instance.StartTargeting(currentSelectedPokemon, currentMove);
+                }
+                else
+                {
+                    Debug.LogWarning("TargetingManager not found or no pokemon selected.");
+                }
             });
         }
     }
