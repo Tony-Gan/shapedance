@@ -897,17 +897,85 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: level
+      value: 51
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
       propertyPath: gender
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: nature
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
       propertyPath: pokemon
       value: 
       objectReference: {fileID: 11400000, guid: fe1e5a914f9991d4789988e025f62473, type: 2}
     - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: _critStage
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: evSpDefense
+      value: 252
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
       propertyPath: 'moves.Array.data[0]'
       value: 
       objectReference: {fileID: 11400000, guid: f747e0f303df8de46a3b2786f67ffa84, type: 2}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: _debugStatKeys.Array.size
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: _debugStatValues.Array.size
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: '_debugStatKeys.Array.data[1]'
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: '_debugStatKeys.Array.data[2]'
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: '_debugStatKeys.Array.data[3]'
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: '_debugStatKeys.Array.data[4]'
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: '_debugStatKeys.Array.data[5]'
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: '_debugStatValues.Array.data[0]'
+      value: 106
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: '_debugStatValues.Array.data[1]'
+      value: 48
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: '_debugStatValues.Array.data[2]'
+      value: 59
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: '_debugStatValues.Array.data[3]'
+      value: 71
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: '_debugStatValues.Array.data[4]'
+      value: 103
+      objectReference: {fileID: 0}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: '_debugStatValues.Array.data[5]'
+      value: 50
+      objectReference: {fileID: 0}
     - target: {fileID: 6991359336079399252, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
