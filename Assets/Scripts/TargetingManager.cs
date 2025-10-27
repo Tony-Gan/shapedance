@@ -10,7 +10,6 @@ public class TargetingManager : MonoBehaviour
     [SerializeField] private SpriteRenderer rangeIndicatorSprite;
     [SerializeField] private Color attackColor = new(1f, 0f, 0f, 0.4f);
     [SerializeField] private Color otherColor = new(0.5f, 0.5f, 0.5f, 0.4f);
-
     [SerializeField] private float zOffset = 1f;
 
     private Camera mainCamera;
@@ -20,9 +19,28 @@ public class TargetingManager : MonoBehaviour
     private PokemonStats caster;
     private MoveBaseSO currentMove;
     private float currentRange;
-
-    private List<DraggableItem> highlightedTargets = new();
     private DraggableItem casterDraggableItem; 
+
+    private readonly List<DraggableItem> highlightedTargets = new();
+    private readonly List<PokemonStats> confirmedMultiTargets = new();
+    
+    public SpriteRenderer RangeIndicatorSprite => rangeIndicatorSprite;
+    public Color AttackColor => attackColor;
+    public Color OtherColor => otherColor;
+    public float ZOffset => zOffset;
+    
+    public PokemonStats Caster => caster;
+    public MoveBaseSO CurrentMove => currentMove;
+    public DraggableItem CasterDraggableItem => casterDraggableItem;
+    
+    public float CurrentRange
+    {
+        get => currentRange;
+        set => currentRange = value;
+    }
+    public List<DraggableItem> HighlightedTargets => highlightedTargets;
+    public List<PokemonStats> ConfirmedMultiTargets => confirmedMultiTargets;
+    
 
     void Awake()
     {
@@ -50,107 +68,83 @@ public class TargetingManager : MonoBehaviour
 
     public void StartTargeting(PokemonStats caster, MoveBaseSO move)
     {
+        if (move.targetingStrategy == null)
+        {
+            Debug.LogError($"Move {move.moveNameCN} ({move.moveID}) is missing a TargetingStrategySO!", move);
+            return;
+        }
+        
         CancelTargeting();
 
         this.caster = caster;
         currentMove = move;
         casterDraggableItem = caster.GetComponent<DraggableItem>();
 
-        switch (move.targetType)
-        {
-            case TargetType.SingleTarget:
-                InitiateRadiusTargeting(caster, move);
-                break;
-
-            case TargetType.MultipleTarget:
-                Debug.Log("Initiating MultipleTarget targeting (currently same as SingleTarget)");
-                InitiateRadiusTargeting(caster, move);
-                break;
-
-            case TargetType.Circle:
-                Debug.Log("Initiating Circle targeting (currently same as SingleTarget)");
-                InitiateRadiusTargeting(caster, move);
-                break;
-
-            case TargetType.Cone:
-                Debug.LogWarning($"Targeting UI for TargetType '{move.targetType}' is not yet implemented.");
-                CancelTargeting();
-                break;
-            
-            default:
-                CancelTargeting();
-                break;
-        }
-    }
-
-    private void InitiateRadiusTargeting(PokemonStats caster, MoveBaseSO move)
-    {
-        float casterRadius = caster.pokemon.radius; 
-        currentRange = move.range + casterRadius; 
-
-        rangeIndicatorSprite.color = (move is AttackMoveSO) ? attackColor : otherColor;
-
-        UpdateIndicatorPosition();
-
-        float diameter = currentRange * 2f;
-        rangeIndicatorSprite.transform.localScale = new Vector3(diameter, diameter, 1f);
-
-        rangeIndicatorSprite.gameObject.SetActive(true);
-        
-        FindAndHighlightTargets();
+        currentMove.targetingStrategy.Initiate(this, caster, move);
         
         isTargeting = true;
     }
 
     public void CancelTargeting()
     {
-        ClearHighlightedTargets();
-
+        ClearSelectedTargets();
         isTargeting = false;
         caster = null;
         currentMove = null;
         casterDraggableItem = null; 
         currentRange = 0;
-
+        highlightedTargets.Clear();
+        confirmedMultiTargets.Clear();
         rangeIndicatorSprite.gameObject.SetActive(false);
     }
 
-    private void FindAndHighlightTargets()
+    public void FindAndCacheTargetsInRange()
     {
+        highlightedTargets.Clear();
         float casterTotalRange = currentRange;
         
         DraggableItem[] allItems = FindObjectsByType<DraggableItem>(FindObjectsSortMode.None);
 
         foreach (DraggableItem item in allItems)
         {
-            if (item == casterDraggableItem) continue;
-            if (!item.TryGetComponent(out PokemonStats targetStats)) continue;
+            if (item == casterDraggableItem)
+            {
+                if (currentMove.targetingStrategy.target == Target.Self || currentMove.targetingStrategy.target == Target.AllyTeam)
+                {
+                     highlightedTargets.Add(item);
+                }
+                continue;
+            }
+
+            if (!item.TryGetComponent(out PokemonStats _)) continue;
 
             float distance = Vector2.Distance(caster.transform.position, item.transform.position);
 
             if (distance < casterTotalRange)
             {
-                item.SetTargetHighlight(true); 
                 highlightedTargets.Add(item); 
             }
         }
     }
 
-    private void ClearHighlightedTargets()
+    public void ClearSelectedTargets()
     {
-        foreach (DraggableItem item in highlightedTargets)
+        foreach (PokemonStats targetStats in confirmedMultiTargets)
         {
-            if (item != null)
+            if (targetStats != null)
             {
-                item.SetTargetHighlight(false);
+                DraggableItem item = targetStats.GetComponent<DraggableItem>(); //
+                if (item != null)
+                {
+                    item.SetTargetHighlight(false); //
+                }
             }
         }
-        highlightedTargets.Clear();
     }
 
     void Update()
     {
-        if (!isTargeting || currentMouse == null)
+        if (!isTargeting || currentMouse == null || currentMove == null || currentMove.targetingStrategy == null)
         {
             return;
         }
@@ -162,22 +156,16 @@ public class TargetingManager : MonoBehaviour
 
         if (currentMouse.rightButton.wasPressedThisFrame)
         {
-            CancelTargeting();
+            currentMove.targetingStrategy.HandleRightClick(this, GetMouseWorldPos(), Physics2D.Raycast(GetMouseWorldPos(), Vector2.zero));
         }
     }
     
     void LateUpdate()
     {
-        if (isTargeting && caster != null && currentMove.targetType != TargetType.Cone)
+        if (isTargeting && caster != null && currentMove != null && currentMove.targetingStrategy != null)
         {
-            UpdateIndicatorPosition();
+            currentMove.targetingStrategy.UpdateIndicator(this, caster);
         }
-    }
-    
-    private void UpdateIndicatorPosition()
-    {
-        Vector3 casterPos = caster.transform.position;
-        rangeIndicatorSprite.transform.position = new Vector3(casterPos.x, casterPos.y, casterPos.z + zOffset);
     }
 
     private void HandleTargetingClick()
@@ -185,62 +173,74 @@ public class TargetingManager : MonoBehaviour
         Vector3 mouseWorldPos = GetMouseWorldPos();
         float distance = Vector2.Distance(caster.transform.position, mouseWorldPos);
 
-        if (currentRange > 0 && distance > currentRange)
+        RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero);
+        if (currentRange > 0 && distance > currentRange && hit.collider == null)
         {
             CancelTargeting();
             return;
         }
 
-        switch (currentMove.targetType)
-        {
-            case TargetType.SingleTarget:
-                HandleClick_SingleTarget(mouseWorldPos);
-                break;
-
-            case TargetType.MultipleTarget:
-                Debug.LogWarning($"Click logic for TargetType '{currentMove.targetType}' is not yet implemented.");
-                CancelTargeting();
-                break;
-
-            case TargetType.Circle:
-                Debug.LogWarning($"Click logic for TargetType '{currentMove.targetType}' is not yet implemented.");
-                CancelTargeting();
-                break;
-
-            case TargetType.Cone:
-                Debug.LogWarning($"Click logic for TargetType '{currentMove.targetType}' is not yet implemented.");
-                CancelTargeting();
-                break;
-        }
+        currentMove.targetingStrategy.HandleClick(this, mouseWorldPos, hit);
     }
 
-    private void HandleClick_SingleTarget(Vector3 mouseWorldPos)
+    public bool IsValidTarget(DraggableItem targetItem, Target moveTargetType)
     {
-        RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero);
-
-        if (hit.collider != null)
+        bool isSelf = targetItem == casterDraggableItem;
+        
+        if (isSelf)
         {
-            if (hit.collider.TryGetComponent(out DraggableItem hitItem))
+            if (moveTargetType == Target.Self || moveTargetType == Target.AllyTeam || moveTargetType == Target.Creature)
             {
-                if (hitItem == casterDraggableItem)
-                {
-                    return;
-                }
+                return true;
+            }
+            else
+            {
+                Debug.LogError($"Invalid Target: Move target type is {moveTargetType}, cannot target Self.");
+                return false;
+            }
+        }
+        else
+        {
+            if (moveTargetType == Target.Self)
+            {
+                Debug.LogError($"Invalid Target: Move target type is {moveTargetType}, must target Self.");
+                return false;
+            }
+            
+            // TODO: Ally/Enemy checks here
+        }
+        
+        return true;
+    }
 
-                if (highlightedTargets.Contains(hitItem))
+    public void ExecuteMove(PokemonStats caster, PokemonStats target, MoveBaseSO move)
+    {
+        if (target == null || caster == null || move == null) return;
+        
+        if (move is AttackMoveSO attackMove)
+        {
+            BattleCalculator.HandleAttack(caster, target, attackMove);
+        }
+        else
+        {
+            Debug.LogWarning($"Move {move.moveName} ({move.moveNameCN}) is not an AttackMove. Calculation logic not implemented.");
+        }
+        if (!target.IsFainted())
+        {
+            if (move.additionalEffects != null && move.additionalEffects.Count > 0)
+            {
+                foreach (MoveEffectSO effect in move.additionalEffects)
                 {
-                    Debug.Log("Move Target: " + hitItem.GetComponent<PokemonStats>().pokemon.pokemonNameCN);
-                    CancelTargeting();
-                    return;
+                    if (effect != null)
+                    {
+                        effect.Execute(caster, target);
+                    }
                 }
-                
-                CancelTargeting();
-                return;
             }
         }
     }
 
-    private Vector3 GetMouseWorldPos()
+    public Vector3 GetMouseWorldPos()
     {
         Vector2 mouseScreenPos = currentMouse.position.ReadValue();
         Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, mainCamera.nearClipPlane));

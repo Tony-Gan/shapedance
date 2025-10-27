@@ -1,6 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum MoveRangeType
+{
+    FixedValue,
+    CasterRadius
+}
+
 public abstract class MoveBaseSO : ScriptableObject
 {
     [Header("Base Info")]
@@ -9,10 +15,9 @@ public abstract class MoveBaseSO : ScriptableObject
     public string moveName;
     public string moveNameCN;
     public int pp;
-    
-    public int range;
-    public TargetType targetType;
-    public Target target;
+
+    [Header("Targeting")]
+    public TargetingStrategySO targetingStrategy;
 
     [Header("Additional Effects")]
     public List<MoveEffectSO> additionalEffects;

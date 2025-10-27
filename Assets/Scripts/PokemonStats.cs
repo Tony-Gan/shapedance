@@ -8,7 +8,7 @@ public class PokemonStats : MonoBehaviour
     public string alias;
     public Gender gender = Gender.NA;
     public PokemonNature nature = PokemonNature.Hardy;
-    [SerializeField] private MoveBaseSO[] moves = new MoveBaseSO[6];
+    [SerializeField] private MoveBaseSO[] moves = new MoveBaseSO[4];
 
     [Range(1, 100)]
     public int level = 5;
@@ -44,16 +44,21 @@ public class PokemonStats : MonoBehaviour
     [Header("Current Status")]
     [SerializeField] private int _currentHP;
     [SerializeField] private int _currentEXP;
-    [SerializeField][Range(0, 6)] private int _critStage = 0;
-    [SerializeField][Range(0, 6)] private int _accuracyStage = 0;
-    [SerializeField][Range(0, 6)] private int _evasionStage = 0;
+    [SerializeField][Range(-6, 6)] private int _critStage = 0;
+    [SerializeField][Range(-6, 6)] private int _accuracyStage = 0;
+    [SerializeField][Range(-6, 6)] private int _evasionStage = 0;
+    [SerializeField][Range(-6, 6)] private int _attackStage = 0;
+    [SerializeField][Range(-6, 6)] private int _defenseStage = 0;
+    [SerializeField][Range(-6, 6)] private int _spAttackStage = 0;
+    [SerializeField][Range(-6, 6)] private int _spDefenseStage = 0;
+    [SerializeField][Range(-6, 6)] private int _speedStage = 0;
 
     [Header("Calculated Stats")]
     [SerializeField] private Dictionary<StatType, int> currentStats = new();
 
     [Space(10)]
     [Header("Debug: Calculated Stats View")]
-    [SerializeField] private List<StatType> _debugStatKeys = new();
+    [SerializeField] private List<StatType>_debugStatKeys = new();
     [SerializeField] private List<int> _debugStatValues = new();
     
     
@@ -82,8 +87,7 @@ public class PokemonStats : MonoBehaviour
             while (_currentEXP >= 100 && level < 100)
             {
                 _currentEXP -= 100;
-                level++;
-                RecalculateStats(); 
+                LevelUp(); 
             }
         }
     }
@@ -93,7 +97,7 @@ public class PokemonStats : MonoBehaviour
         get => _critStage;
         set
         {
-            _critStage = Mathf.Clamp(value, 0, 6);
+            _critStage = Mathf.Clamp(value, -6, 6);
         }
     }
     
@@ -102,7 +106,7 @@ public class PokemonStats : MonoBehaviour
         get => _accuracyStage;
         set
         {
-            _accuracyStage = Mathf.Clamp(value, 0, 6);
+            _accuracyStage = Mathf.Clamp(value, -6, 6);
         }
     }
     
@@ -111,8 +115,65 @@ public class PokemonStats : MonoBehaviour
         get => _evasionStage;
         set
         {
-            _evasionStage = Mathf.Clamp(value, 0, 6);
+            _evasionStage = Mathf.Clamp(value, -6, 6);
         }
+    }
+
+    public int AttackStage
+    {
+        get => _attackStage;
+        set
+        {
+            _attackStage = Mathf.Clamp(value, -6, 6);
+        }
+    }
+    
+    public int DefenseStage
+    {
+        get => _defenseStage;
+        set
+        {
+            _defenseStage = Mathf.Clamp(value, -6, 6);
+        }
+    }
+    
+    public int SpAttackStage
+    {
+        get => _spAttackStage;
+        set
+        {
+            _spAttackStage = Mathf.Clamp(value, -6, 6);
+        }
+    }
+    
+    public int SpDefenseStage
+    {
+        get => _spDefenseStage;
+        set
+        {
+            _spDefenseStage = Mathf.Clamp(value, -6, 6);
+        }
+    }
+    
+    public int SpeedStage
+    {
+        get => _speedStage;
+        set
+        {
+            _speedStage = Mathf.Clamp(value, -6, 6);
+        }
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (damage < 0) return;
+
+        CurrentHP -= damage; 
+    }
+    
+    public bool IsFainted()
+    {
+        return CurrentHP == 0;
     }
 
 
@@ -157,6 +218,38 @@ public class PokemonStats : MonoBehaviour
                 return 0;
             }
         }
+    }
+
+    [ContextMenu("Rest (Heal and Reset Stages)")]
+    public void Rest()
+    {
+        CurrentHP = GetStat(StatType.HP);
+
+        CritStage = 0;
+        AccuracyStage = 0;
+        EvasionStage = 0;
+        AttackStage = 0;
+        DefenseStage = 0;
+        SpAttackStage = 0;
+        SpDefenseStage = 0;
+        SpeedStage = 0;
+        
+        Debug.Log($"[Debug]: {alias} has been fully rested. HP restored and stages reset.", this);
+    }
+    
+    [ContextMenu("Level Up (+1)")]
+    public void LevelUp()
+    {
+        if (level >= 100)
+        {
+            Debug.Log($"[Debug]: {alias} is already at max level (100).", this);
+            return;
+        }
+
+        level++;
+        Debug.Log($"[Debug]: {alias} leveled up to Level {level}!", this);
+        
+        RecalculateStats();
     }
 
     [ContextMenu("Recalculate Stats Now")]

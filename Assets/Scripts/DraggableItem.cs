@@ -16,16 +16,16 @@ public class DraggableItem : MonoBehaviour
     private Mouse currentMouse;
 
     [Header("Dragging Physics")]
-    [SerializeField] private float mouseDragSpeed = 15f; 
+    [SerializeField] private readonly float mouseDragSpeed = 15f; 
     
-    private HashSet<Rigidbody2D> collidingBodies = new();
-    private HashSet<DraggableItem> triggeredKnockbacks = new();
-    private Collider2D myCollider;
+    private readonly HashSet<Rigidbody2D> collidingBodies = new();
+    private readonly HashSet<DraggableItem> triggeredKnockbacks = new();
+    private Collider2D coll;
     private PokemonStats pokemonStats;
 
     private LineRenderer lineRenderer;
     [Header("Visuals")]
-    [SerializeField] private bool showLineWhileDragging = false;
+    [SerializeField] private readonly bool showLineWhileDragging = false;
     private bool previousShowLineWhileDragging;
     private Vector3 dragStartPosition;
 
@@ -39,9 +39,9 @@ public class DraggableItem : MonoBehaviour
     
     [Header("Jiggle Effect")]
     [Tooltip("Drag the 'VisualContainer' parent object here.")]
-    [SerializeField] private Transform visualTransform; 
-    [SerializeField] private float knockbackDistance = 0.4f;
-    [SerializeField] private float knockbackDuration = 0.3f;
+    [SerializeField] private readonly Transform visualTransform; 
+    [SerializeField] private readonly float knockbackDistance = 0.4f;
+    [SerializeField] private readonly float knockbackDuration = 0.3f;
     private Coroutine jiggleCoroutine;
     private Vector3 jiggleVelocity; 
 
@@ -51,7 +51,7 @@ public class DraggableItem : MonoBehaviour
         mainCamera = Camera.main;
         rb = GetComponent<Rigidbody2D>();
         lineRenderer = GetComponent<LineRenderer>();
-        myCollider = GetComponent<Collider2D>();
+        coll = GetComponent<Collider2D>();
         pokemonStats = GetComponent<PokemonStats>();
         
         if (visualTransform == null)
@@ -235,7 +235,7 @@ public class DraggableItem : MonoBehaviour
     {
         float pokemonRadius = pokemonStats.pokemon.radius;
 
-        if (myCollider is CircleCollider2D circleCollider)
+        if (coll is CircleCollider2D circleCollider)
         {
             circleCollider.radius = pokemonRadius;
         }
@@ -363,11 +363,11 @@ public class DraggableItem : MonoBehaviour
         filter.SetLayerMask(Physics2D.AllLayers);
         
         List<Collider2D> results = new();
-        _ = Physics2D.OverlapCollider(myCollider, filter, results);
+        _ = Physics2D.OverlapCollider(coll, filter, results);
 
         foreach (Collider2D col in results)
         {
-            if (col == myCollider) continue;
+            if (col == coll) continue;
             if (col.TryGetComponent<DraggableItem>(out _))
             {
                 Rigidbody2D otherRb = col.attachedRigidbody;

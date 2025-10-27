@@ -7,8 +7,8 @@ public class AttackMoveSO : MoveBaseSO
     public AttackType attackType;
     public ElementType elementType;
     public int power;
-    [Range(0, 6)]
+    [Range(-6, 6)]
     public int accuracyLevel = 0;
-    [Range(0, 6)]
+    [Range(-6, 6)]
     public int criticalLevel = 0;
 }

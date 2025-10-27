@@ -46,7 +46,8 @@ public enum Target
 {
     Self,
     Space,
-    Ally,
+    AllyOther,
+    AllyTeam,
     Enemy,
     Creature
 }
@@ -68,7 +69,9 @@ public enum StatType
     Defense,
     SpAttack,
     SpDefense,
-    Speed
+    Speed,
+    Accuracy,
+    Evasion
 }
 
 public enum PokemonNature
