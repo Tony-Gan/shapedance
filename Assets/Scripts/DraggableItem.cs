@@ -6,6 +6,7 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(LineRenderer))]
+[RequireComponent(typeof(PokemonStats))]
 public class DraggableItem : MonoBehaviour
 {
     private Camera mainCamera;
@@ -17,9 +18,10 @@ public class DraggableItem : MonoBehaviour
     [Header("Dragging Physics")]
     [SerializeField] private float mouseDragSpeed = 15f; 
     
-    private HashSet<Rigidbody2D> collidingBodies = new HashSet<Rigidbody2D>();
-    private HashSet<DraggableItem> triggeredKnockbacks = new HashSet<DraggableItem>();
+    private HashSet<Rigidbody2D> collidingBodies = new();
+    private HashSet<DraggableItem> triggeredKnockbacks = new();
     private Collider2D myCollider;
+    private PokemonStats pokemonStats;
 
     private LineRenderer lineRenderer;
     [Header("Visuals")]
@@ -50,6 +52,7 @@ public class DraggableItem : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         lineRenderer = GetComponent<LineRenderer>();
         myCollider = GetComponent<Collider2D>();
+        pokemonStats = GetComponent<PokemonStats>();
         
         if (visualTransform == null)
         {
@@ -57,22 +60,40 @@ public class DraggableItem : MonoBehaviour
             return;
         }
 
-        sr = visualTransform.GetComponentInChildren<SpriteRenderer>(); 
+        sr = visualTransform.GetComponentInChildren<SpriteRenderer>();
         if (sr == null)
         {
             Debug.LogError("Could not find a SpriteRenderer in the children of 'Visual Transform'.", this);
         }
         else
         {
-            UpdateColor(); 
+            UpdateColor();
         }
 
-        // 设置为Kinematic防止被其他物体推动
+        if (pokemonStats != null && pokemonStats.pokemon != null)
+        {
+            if (pokemonStats.pokemon.pokemonSprite != null)
+            {
+                sr.sprite = pokemonStats.pokemon.pokemonSprite;
+            }
+            else
+            {
+                Debug.LogWarning($"PokemonSO '{pokemonStats.pokemon.pokemonName}' is missing a Sprite.", this);
+            }
+        }
+        else
+        {
+            Debug.LogError("FATAL: 'PokemonStats' component is missing or its PokemonSO is not set.", this);
+            enabled = false;
+            return;
+        }
+        
+        ApplyPokemonRadius();
+
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.gravityScale = 0;
         rb.freezeRotation = true; 
-        
-        // 使用Continuous碰撞检测（用户已设置，这里确保）
+
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
 
         currentMouse = Mouse.current;
@@ -195,19 +216,52 @@ public class DraggableItem : MonoBehaviour
         collidingBodies.Clear();
         triggeredKnockbacks.Clear();
     }
-    
+
     private void CancelDrag()
     {
         isDragging = false;
         lineRenderer.enabled = false;
-        
-        rb.position = dragStartPosition; 
+
+        rb.position = dragStartPosition;
         rb.linearVelocity = Vector2.zero;
-        
+
         rb.bodyType = RigidbodyType2D.Kinematic;
-        
+
         collidingBodies.Clear();
         triggeredKnockbacks.Clear();
+    }
+    
+    private void ApplyPokemonRadius()
+    {
+        float pokemonRadius = pokemonStats.pokemon.radius;
+
+        if (myCollider is CircleCollider2D circleCollider)
+        {
+            circleCollider.radius = pokemonRadius;
+        }
+        else
+        {
+            Debug.LogWarning($"Collider on {gameObject.name} is not a CircleCollider2D. Cannot apply radius.", this);
+        }
+
+        if (visualTransform != null && sr != null && sr.sprite != null)
+        {
+            float originalSpriteWidth = sr.sprite.bounds.size.x;
+
+            if (originalSpriteWidth < 0.001f)
+            {
+                Debug.LogError($"Sprite {sr.sprite.name} has bounds.size.x of zero. Cannot scale correctly.", this);
+                return;
+            }
+            
+            float desiredDiameter = pokemonRadius * 2f;
+            float scaleFactor = desiredDiameter / originalSpriteWidth;
+            visualTransform.localScale = new Vector3(scaleFactor, scaleFactor, visualTransform.localScale.z);
+        }
+        else
+        {
+            Debug.LogWarning("Cannot apply visual scaling. SpriteRenderer, Sprite, or VisualTransform is missing.", this);
+        }
     }
     
     void FixedUpdate()
@@ -215,7 +269,7 @@ public class DraggableItem : MonoBehaviour
         if (isDragging)
         {
             Vector3 desiredPos = GetMouseWorldPos() + offset;
-            Vector2 moveDirection = new Vector2(desiredPos.x, desiredPos.y) - rb.position;
+            Vector2 moveDirection = (Vector2)desiredPos - rb.position;
             
             if (collidingBodies.Count > 0)
             {
@@ -301,12 +355,14 @@ public class DraggableItem : MonoBehaviour
     private void DetectInitialContacts()
     {
         collidingBodies.Clear();
-        
-        ContactFilter2D filter = new ContactFilter2D();
-        filter.useTriggers = false;
+
+        ContactFilter2D filter = new()
+        {
+            useTriggers = false
+        };
         filter.SetLayerMask(Physics2D.AllLayers);
         
-        List<Collider2D> results = new List<Collider2D>();
+        List<Collider2D> results = new();
         _ = Physics2D.OverlapCollider(myCollider, filter, results);
 
         foreach (Collider2D col in results)

@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1a0a6a995988f3a44a1a2a247459df55, type: 3}
-  m_Name: 1 - Bulbasaur
+  m_Name: 9 - Blastoise
   m_EditorClassIdentifier: Assembly-CSharp::Pokemon
-  pokedexNumber: 1
-  pokemonName: Bulbasaur
-  pokemonNameCN: "\u5999\u86D9\u79CD\u5B50"
-  radius: 5
-  pokemonSprite: {fileID: -4938946576939203426, guid: 801abd22d4835c545b29c4c5cc371129, type: 3}
-  type1: 4
+  pokedexNumber: 9
+  pokemonName: Blastoise
+  pokemonNameCN: "\u6C34\u7BAD\u9F9F"
+  radius: 7
+  pokemonSprite: {fileID: -8600406390588114162, guid: 873c53e5cbbf35044b6f2287d400a89c, type: 3}
+  type1: 3
   type2: 0
-  baseHP: 45
-  baseAttack: 49
-  baseDefense: 49
-  baseSpAttack: 65
-  baseSpDefense: 65
-  baseSpeed: 45
+  baseHP: 79
+  baseAttack: 83
+  baseDefense: 100
+  baseSpAttack: 85
+  baseSpDefense: 105
+  baseSpeed: 78

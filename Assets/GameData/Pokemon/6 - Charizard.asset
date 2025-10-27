@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1a0a6a995988f3a44a1a2a247459df55, type: 3}
-  m_Name: 1 - Bulbasaur
+  m_Name: 6 - Charizard
   m_EditorClassIdentifier: Assembly-CSharp::Pokemon
-  pokedexNumber: 1
-  pokemonName: Bulbasaur
-  pokemonNameCN: "\u5999\u86D9\u79CD\u5B50"
-  radius: 5
-  pokemonSprite: {fileID: -4938946576939203426, guid: 801abd22d4835c545b29c4c5cc371129, type: 3}
-  type1: 4
-  type2: 0
-  baseHP: 45
-  baseAttack: 49
-  baseDefense: 49
-  baseSpAttack: 65
-  baseSpDefense: 65
-  baseSpeed: 45
+  pokedexNumber: 6
+  pokemonName: Charizard
+  pokemonNameCN: "\u55B7\u706B\u9F99"
+  radius: 8
+  pokemonSprite: {fileID: 1850302624278303789, guid: e5b0fe0134d0ea943b0ea59f5dfac055, type: 3}
+  type1: 2
+  type2: 10
+  baseHP: 78
+  baseAttack: 84
+  baseDefense: 78
+  baseSpAttack: 109
+  baseSpDefense: 85
+  baseSpeed: 100

@@ -233,6 +233,7 @@ GameObject:
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
   - component: {fileID: 519420030}
+  - component: {fileID: 519420033}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -327,7 +328,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 10
+  orthographic size: 50
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -358,6 +359,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519420033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5cc9e8782e9f64846b7a767edaac1da8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraController
+  defaultSize: 50
+  minSize: 20
+  maxSize: 100
+  zoomSpeed: 0.05
+  panSpeed: 1
 --- !u!1 &593333773
 GameObject:
   m_ObjectHideFlags: 0
@@ -555,7 +573,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: -1951186282684711130, guid: b99e878bb9f8fa74f9c66d67296cd3ba, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -592,7 +610,11 @@ PrefabInstance:
     - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
       propertyPath: pokemon
       value: 
-      objectReference: {fileID: 11400000, guid: fe1e5a914f9991d4789988e025f62473, type: 2}
+      objectReference: {fileID: 11400000, guid: 0295c0e2db2612c4a9747427184821e2, type: 2}
+    - target: {fileID: 2602433636452783177, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
+      propertyPath: 'moves.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: f747e0f303df8de46a3b2786f67ffa84, type: 2}
     - target: {fileID: 6991359336079399252, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.75
@@ -750,7 +772,7 @@ RectTransform:
   m_GameObject: {fileID: 1675968603}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.4375, y: 0.48753, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 442587073}
@@ -758,7 +780,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 822, y: 567}
+  m_SizeDelta: {x: 400, y: 1080}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1675968605
 MonoBehaviour:
@@ -1117,11 +1139,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6991359336079399252, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -9.98
       objectReference: {fileID: 0}
     - target: {fileID: 6991359336079399252, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.06
+      value: 3.69
       objectReference: {fileID: 0}
     - target: {fileID: 6991359336079399252, guid: cb1cfe38ab6853d43afee010dc96b885, type: 3}
       propertyPath: m_LocalPosition.z

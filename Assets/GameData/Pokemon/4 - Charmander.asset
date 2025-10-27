@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1a0a6a995988f3a44a1a2a247459df55, type: 3}
-  m_Name: 1 - Bulbasaur
+  m_Name: 4 - Charmander
   m_EditorClassIdentifier: Assembly-CSharp::Pokemon
-  pokedexNumber: 1
-  pokemonName: Bulbasaur
-  pokemonNameCN: "\u5999\u86D9\u79CD\u5B50"
-  radius: 5
-  pokemonSprite: {fileID: -4938946576939203426, guid: 801abd22d4835c545b29c4c5cc371129, type: 3}
-  type1: 4
+  pokedexNumber: 4
+  pokemonName: Charmander
+  pokemonNameCN: "\u5C0F\u706B\u9F99"
+  radius: 1
+  pokemonSprite: {fileID: -1509525088455390036, guid: de739961228015b4f9cd00c1713cfc66, type: 3}
+  type1: 2
   type2: 0
-  baseHP: 45
-  baseAttack: 49
-  baseDefense: 49
-  baseSpAttack: 65
-  baseSpDefense: 65
-  baseSpeed: 45
+  baseHP: 39
+  baseAttack: 52
+  baseDefense: 43
+  baseSpAttack: 60
+  baseSpDefense: 50
+  baseSpeed: 65

@@ -5,11 +5,12 @@ public class PokemonSO : ScriptableObject
 {
     public int pokedexNumber;
 
-    [Header("Names")]
+    [Header("Basic")]
     public string pokemonName = "English Name";
     public string pokemonNameCN = "中文名";
     [Range(1, 100)]
     public int radius = 1;
+    public Sprite pokemonSprite;
 
     [Header("Types")]
     public ElementType type1 = ElementType.None;
