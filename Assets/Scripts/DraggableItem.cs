@@ -9,6 +9,12 @@ using System.Collections.Generic;
 [RequireComponent(typeof(PokemonStats))]
 public class DraggableItem : MonoBehaviour
 {
+    public enum TargetingState
+    {
+        None,
+        Targetable,
+        Confirmed
+    }
     private Camera mainCamera;
     private Rigidbody2D rb;
     private Vector3 offset;
@@ -34,14 +40,15 @@ public class DraggableItem : MonoBehaviour
     [SerializeField] private Color highlightColor = Color.yellow;
     [SerializeField] private Color targetColor = Color.red;
     
-    private bool isSelected = false;
-    private bool isTargeted = false;
+    [Header("Visuals - State")]
+    [SerializeField] private SpriteRenderer outlineSprite;
+    private TargetingState currentTargetingState = TargetingState.None;
     
     [Header("Jiggle Effect")]
     [Tooltip("Drag the 'VisualContainer' parent object here.")]
-    [SerializeField] private readonly Transform visualTransform; 
-    [SerializeField] private readonly float knockbackDistance = 0.4f;
-    [SerializeField] private readonly float knockbackDuration = 0.3f;
+    [SerializeField] private Transform visualTransform; 
+    [SerializeField] private float knockbackDistance = 0.4f;
+    [SerializeField] private float knockbackDuration = 0.3f;
     private Coroutine jiggleCoroutine;
     private Vector3 jiggleVelocity; 
 
@@ -56,16 +63,28 @@ public class DraggableItem : MonoBehaviour
         
         if (visualTransform == null)
         {
-            Debug.LogError("FATAL: 'Visual Transform' is not set in the Inspector. Please drag the 'VisualContainer' object into this slot.", this);
+            Debug.LogError("FATAL: 'Visual Transform' is not set in the Inspector. Please drag the 'Visuals' object into this slot.", this);
             return;
         }
 
-        sr = visualTransform.GetComponentInChildren<SpriteRenderer>();
+        sr = visualTransform.GetComponent<SpriteRenderer>(); 
         if (sr == null)
         {
-            Debug.LogError("Could not find a SpriteRenderer in the children of 'Visual Transform'.", this);
+            sr = visualTransform.GetComponentInChildren<SpriteRenderer>();
+            if (sr == null)
+            {
+                Debug.LogError("Could not find a SpriteRenderer on 'Visual Transform' or in its children.", this);
+            }
         }
-        else
+        
+        if (outlineSprite == null)
+        {
+            Debug.LogError("FATAL: 'Outline Sprite' is not set in the Inspector. Please create an 'Outline' child object and drag its SpriteRenderer here.", this);
+            return;
+        }
+        outlineSprite.enabled = false;
+
+        if (sr != null)
         {
             UpdateColor();
         }
@@ -74,7 +93,14 @@ public class DraggableItem : MonoBehaviour
         {
             if (pokemonStats.pokemon.pokemonSprite != null)
             {
-                sr.sprite = pokemonStats.pokemon.pokemonSprite;
+                if (sr != null)
+                {
+                    sr.sprite = pokemonStats.pokemon.pokemonSprite;
+                }
+                if (outlineSprite != null)
+                {
+                    outlineSprite.sprite = pokemonStats.pokemon.pokemonSprite; 
+                }
             }
             else
             {
@@ -93,14 +119,10 @@ public class DraggableItem : MonoBehaviour
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.gravityScale = 0;
         rb.freezeRotation = true; 
-
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-
         currentMouse = Mouse.current;
-
         lineRenderer.positionCount = 2;
         lineRenderer.enabled = false;
-
         previousShowLineWhileDragging = showLineWhileDragging;
     }
 
@@ -156,6 +178,11 @@ public class DraggableItem : MonoBehaviour
         {
             if (currentMouse.leftButton.wasPressedThisFrame)
             {
+                if (TargetingManager.Instance != null && TargetingManager.Instance.DidConsumeInputThisFrame())
+                {
+                    return;
+                }
+
                 Vector3 mouseWorldPos = GetMouseWorldPos();
                 RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero);
 
@@ -243,24 +270,36 @@ public class DraggableItem : MonoBehaviour
         {
             Debug.LogWarning($"Collider on {gameObject.name} is not a CircleCollider2D. Cannot apply radius.", this);
         }
-
-        if (visualTransform != null && sr != null && sr.sprite != null)
+        
+        Sprite pokemonSprite = pokemonStats.pokemon.pokemonSprite;
+        if (pokemonSprite == null)
         {
-            float originalSpriteWidth = sr.sprite.bounds.size.x;
+            Debug.LogWarning("Cannot apply visual scaling. PokemonSO is missing a Sprite.", this);
+            return;
+        }
 
-            if (originalSpriteWidth < 0.001f)
-            {
-                Debug.LogError($"Sprite {sr.sprite.name} has bounds.size.x of zero. Cannot scale correctly.", this);
-                return;
-            }
-            
-            float desiredDiameter = pokemonRadius * 2f;
-            float scaleFactor = desiredDiameter / originalSpriteWidth;
+        float originalSpriteWidth = pokemonSprite.bounds.size.x;
+        if (originalSpriteWidth < 0.001f)
+        {
+            Debug.LogError($"Sprite {pokemonSprite.name} has bounds.size.x of zero. Cannot scale correctly.", this);
+            return;
+        }
+        
+        float desiredDiameter = pokemonRadius * 2f;
+        float scaleFactor = desiredDiameter / originalSpriteWidth;
+        
+        if (visualTransform != null) //
+        {
             visualTransform.localScale = new Vector3(scaleFactor, scaleFactor, visualTransform.localScale.z);
         }
         else
         {
-            Debug.LogWarning("Cannot apply visual scaling. SpriteRenderer, Sprite, or VisualTransform is missing.", this);
+            Debug.LogWarning("Cannot apply visual scaling. VisualTransform is missing.", this);
+        }
+        
+        if (outlineSprite != null)
+        {
+            outlineSprite.transform.localScale = new Vector3(scaleFactor, scaleFactor, outlineSprite.transform.localScale.z);
         }
     }
     
@@ -317,38 +356,38 @@ public class DraggableItem : MonoBehaviour
     
     public void Highlight()
     {
-        isSelected = true;
-        UpdateColor();
+        if (outlineSprite != null)
+        {
+            outlineSprite.enabled = true;
+        }
     }
 
     public void Dehighlight()
     {
-        isSelected = false;
-        UpdateColor();
+        if (outlineSprite != null)
+        {
+            outlineSprite.enabled = false;
+        }
     }
 
-    public void SetTargetHighlight(bool isTargeted)
+    public void SetTargetingState(TargetingState newState)
     {
-        this.isTargeted = isTargeted;
+        if (currentTargetingState == newState) return;
+        
+        currentTargetingState = newState;
         UpdateColor();
     }
 
     private void UpdateColor()
     {
         if (sr == null) return;
-        
-        if (isSelected)
+
+        sr.color = currentTargetingState switch
         {
-            sr.color = highlightColor;
-        }
-        else if (isTargeted)
-        {
-            sr.color = targetColor;
-        }
-        else
-        {
-            sr.color = normalColor;
-        }
+            TargetingState.Targetable => highlightColor,
+            TargetingState.Confirmed => targetColor,
+            _ => normalColor,
+        };
     }
     
     

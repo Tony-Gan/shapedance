@@ -20,6 +20,7 @@ public class TargetingManager : MonoBehaviour
     private MoveBaseSO currentMove;
     private float currentRange;
     private DraggableItem casterDraggableItem; 
+    private bool inputConsumedThisFrame = false;
 
     private readonly List<DraggableItem> highlightedTargets = new();
     private readonly List<PokemonStats> confirmedMultiTargets = new();
@@ -40,6 +41,16 @@ public class TargetingManager : MonoBehaviour
     }
     public List<DraggableItem> HighlightedTargets => highlightedTargets;
     public List<PokemonStats> ConfirmedMultiTargets => confirmedMultiTargets;
+
+    public bool IsTargeting()
+    {
+        return isTargeting;
+    }
+
+    public bool DidConsumeInputThisFrame()
+    {
+        return inputConsumedThisFrame;
+    }
     
 
     void Awake()
@@ -87,7 +98,15 @@ public class TargetingManager : MonoBehaviour
 
     public void CancelTargeting()
     {
-        ClearSelectedTargets();
+        ClearSelectedTargets(); 
+        foreach (DraggableItem item in highlightedTargets)
+        {
+            if (item != null)
+            {
+                item.SetTargetingState(DraggableItem.TargetingState.None);
+            }
+        }
+
         isTargeting = false;
         caster = null;
         currentMove = null;
@@ -116,13 +135,16 @@ public class TargetingManager : MonoBehaviour
                 continue;
             }
 
-            if (!item.TryGetComponent(out PokemonStats _)) continue;
-
+            if (!item.TryGetComponent(out PokemonStats targetStats)) continue;
+            
+            float targetRadius = targetStats.pokemon.radius;
             float distance = Vector2.Distance(caster.transform.position, item.transform.position);
 
-            if (distance < casterTotalRange)
+            if (distance <= casterTotalRange + targetRadius - 1f)
             {
-                highlightedTargets.Add(item); 
+                highlightedTargets.Add(item);
+                
+                item.SetTargetingState(DraggableItem.TargetingState.Targetable);
             }
         }
     }
@@ -133,10 +155,10 @@ public class TargetingManager : MonoBehaviour
         {
             if (targetStats != null)
             {
-                DraggableItem item = targetStats.GetComponent<DraggableItem>(); //
+                DraggableItem item = targetStats.GetComponent<DraggableItem>();
                 if (item != null)
                 {
-                    item.SetTargetHighlight(false); //
+                    item.SetTargetingState(DraggableItem.TargetingState.None);
                 }
             }
         }
@@ -148,14 +170,16 @@ public class TargetingManager : MonoBehaviour
         {
             return;
         }
-
+        
         if (currentMouse.leftButton.wasPressedThisFrame)
         {
+            inputConsumedThisFrame = true; 
             HandleTargetingClick();
         }
 
         if (currentMouse.rightButton.wasPressedThisFrame)
         {
+            inputConsumedThisFrame = true;
             currentMove.targetingStrategy.HandleRightClick(this, GetMouseWorldPos(), Physics2D.Raycast(GetMouseWorldPos(), Vector2.zero));
         }
     }
@@ -166,6 +190,7 @@ public class TargetingManager : MonoBehaviour
         {
             currentMove.targetingStrategy.UpdateIndicator(this, caster);
         }
+        inputConsumedThisFrame = false;
     }
 
     private void HandleTargetingClick()
@@ -244,7 +269,7 @@ public class TargetingManager : MonoBehaviour
     {
         Vector2 mouseScreenPos = currentMouse.position.ReadValue();
         Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, mainCamera.nearClipPlane));
-        worldPos.z = 0; 
+        worldPos.z = 0;
         return worldPos;
     }
 }

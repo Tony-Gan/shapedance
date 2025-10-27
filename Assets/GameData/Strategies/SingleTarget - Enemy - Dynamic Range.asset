@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SingleTargetStrategySO
   target: 4
   rangeType: 1
-  fixedRange: 1
+  fixedRange: 0

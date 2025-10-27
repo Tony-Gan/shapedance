@@ -15,7 +15,7 @@ public class MultiTargetStrategySO : RadiusTargetingSO
             if (targetStats != null && manager.ConfirmedMultiTargets.Contains(targetStats))
             {
                 manager.ConfirmedMultiTargets.Remove(targetStats);
-                hitItem.SetTargetHighlight(false);
+                hitItem.SetTargetingState(DraggableItem.TargetingState.Targetable); 
             }
             else
             {
@@ -55,7 +55,8 @@ public class MultiTargetStrategySO : RadiusTargetingSO
             }
             
             manager.ConfirmedMultiTargets.Add(targetStats);
-            hitItem.SetTargetHighlight(true);
+            
+            hitItem.SetTargetingState(DraggableItem.TargetingState.Confirmed);
             
             if (manager.ConfirmedMultiTargets.Count == maxTargets)
             {
