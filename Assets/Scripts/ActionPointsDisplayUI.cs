@@ -17,7 +17,7 @@ public class ActionPointsDisplayUI : MonoBehaviour
     void Start()
     {
         SelectionManager.OnSelectionChanged += HandleSelectionChanged;
-        UpdateDisplay(null);
+        UpdateDisplay();
     }
 
     void OnDestroy()
