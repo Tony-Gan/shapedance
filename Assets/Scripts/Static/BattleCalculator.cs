@@ -4,18 +4,6 @@ using System.Text;
 
 public static class BattleCalculator
 {
-    private static readonly float[] accuracyStageModifiers = new float[]
-    {
-        3f/9f, 3f/8f, 3f/7f, 3f/6f, 3f/5f, 3f/4f, 3f/3f,
-        4f/3f, 5f/3f, 6f/3f, 7f/3f, 8f/3f, 9f/3f
-    };
-    
-    private static readonly float[] statStageModifiers = new float[]
-    {
-        2f/8f, 2f/7f, 2f/6f, 2f/5f, 2f/4f, 2f/3f, 2f/2f,
-        3f/2f, 4f/2f, 5f/2f, 6f/2f, 7f/2f, 8f/2f 
-    };
-
     private static readonly Dictionary<ElementType, Dictionary<ElementType, float>> TypeChart;
 
     static BattleCalculator()
@@ -47,8 +35,7 @@ public static class BattleCalculator
     {
         if (!CalculateHit(caster, target, move))
         {
-           
-            Debug.Log($"[Attack Result]: {caster.alias}'s {move.moveName} missed {target.alias}!");
+            Debug.Log($"[Attack Result]: {caster.alias}'s {move.moveName} {BattleConstants.MSG_MISSED} {target.alias}!");
             return;
         }
 
@@ -57,34 +44,28 @@ public static class BattleCalculator
         logBuilder.AppendLine("========================================");
         logBuilder.AppendLine($"Caster: {caster.alias} (Lvl {caster.level})");
         logBuilder.AppendLine($"Target: {target.alias} (Lvl {target.level})");
-        logBuilder.AppendLine($"Move: {move.moveName} (Power: {move.power}, Type: {move.elementType}, Category: {move.attackType})");
+        logBuilder.AppendLine($"Move: {move.moveName} (Power: {move.power}, Acc: {move.accuracy}%, Type: {move.elementType}, Category: {move.attackType})");
 
         bool isCritical = CalculateCritical(caster, move);
         if (isCritical)
         {
-            logBuilder.AppendLine("A CRITICAL HIT!");
+            logBuilder.AppendLine(BattleConstants.MSG_CRITICAL_HIT);
         }
 
-        float typeEffectiveness = GetTypeEffectiveness(move.elementType, target.pokemon.type1);
-        if (target.pokemon.type2 != ElementType.None)
+        float typeEffectiveness = CalculateTypeEffectiveness(move.elementType, target.pokemon);
+        string effectivenessMsg = BattleConstants.GetEffectivenessMessage(typeEffectiveness);
+        if (!string.IsNullOrEmpty(effectivenessMsg))
         {
-            typeEffectiveness *= GetTypeEffectiveness(move.elementType, target.pokemon.type2);
+            logBuilder.AppendLine($"{effectivenessMsg} (x{typeEffectiveness})");
         }
-
-        if (typeEffectiveness > 1.5f) logBuilder.AppendLine($"It's super effective! (x{typeEffectiveness})");
-        else if (typeEffectiveness > 0 && typeEffectiveness < 0.7f) logBuilder.AppendLine($"It's not very effective... (x{typeEffectiveness})");
-        else if (typeEffectiveness == 0f) logBuilder.AppendLine($"It had no effect! (x{typeEffectiveness})");
-        else logBuilder.AppendLine($"Type Effectiveness: x{typeEffectiveness}");
+        else
+        {
+            logBuilder.AppendLine($"Type Effectiveness: x{typeEffectiveness}");
+        }
 
         var (damage, finalAttack, finalDefense) = CalculateDamage(caster, target, move, isCritical, typeEffectiveness);
 
-        string atkStatName = move.attackType == AttackType.Physical ? "Attack" : "Sp. Attack";
-        string defStatName = move.attackType == AttackType.Physical ? "Defense" : "Sp. Defense";
-        int atkStage = move.attackType == AttackType.Physical ? caster.AttackStage : caster.SpAttackStage;
-        int defStage = move.attackType == AttackType.Physical ? target.DefenseStage : target.SpDefenseStage;
-
-        logBuilder.AppendLine($"Caster's {atkStatName} (Stage {atkStage}): {finalAttack:F2}");
-        logBuilder.AppendLine($"Target's {defStatName} (Stage {defStage}): {finalDefense:F2}");
+        LogStatInfo(logBuilder, caster, target, move, finalAttack, finalDefense);
         
         logBuilder.AppendLine("----------------------------------------");
         logBuilder.AppendLine($"Final Damage: {damage}");
@@ -95,7 +76,7 @@ public static class BattleCalculator
 
         if (target.IsFainted())
         {
-            logBuilder.AppendLine($"{target.alias} has fainted!"); 
+            logBuilder.AppendLine($"{target.alias} has {BattleConstants.MSG_FAINTED}"); 
         }
 
         Debug.Log(logBuilder.ToString());
@@ -103,11 +84,17 @@ public static class BattleCalculator
 
     private static bool CalculateHit(PokemonStats caster, PokemonStats target, AttackMoveSO move)
     {
-        float moveBaseAccuracy = 100f;
+        // 🔥 关键修复：使用move的accuracy字段
+        float moveBaseAccuracy = move.accuracy;
+        
+        if (moveBaseAccuracy >= BattleConstants.NEVER_MISS_ACCURACY)
+        {
+            return true;
+        }
         
         int totalAccuracyStage = caster.AccuracyStage + move.accuracyLevel - target.EvasionStage;
-        int stageIndex = Mathf.Clamp(totalAccuracyStage, -6, 6) + 6;
-        float modifier = accuracyStageModifiers[stageIndex];
+        
+        float modifier = BattleConstants.GetAccuracyStageMultiplier(totalAccuracyStage);
         float finalAccuracy = moveBaseAccuracy * modifier;
         
         return Random.Range(0f, 100f) < finalAccuracy;
@@ -115,17 +102,10 @@ public static class BattleCalculator
 
     private static bool CalculateCritical(PokemonStats caster, AttackMoveSO move)
     {
-       
         int totalCritStage = caster.CritStage + move.criticalLevel;
-        totalCritStage = Mathf.Clamp(totalCritStage, 0, 4);
-        float critChance = totalCritStage switch
-        {
-            0 => 1f / 24f,
-            1 => 1f / 8f,
-            2 => 1f / 2f,
-            3 => 1f,
-            _ => 1f,
-        };
+        totalCritStage = Mathf.Clamp(totalCritStage, 0, BattleConstants.MAX_CRIT_STAGE);
+        
+        float critChance = BattleConstants.GetCriticalHitRate(totalCritStage);
         return Random.Range(0f, 1f) < critChance;
     }
 
@@ -138,65 +118,70 @@ public static class BattleCalculator
         float attackStat;
         float defenseStat;
         
-       
         if (move.attackType == AttackType.Physical) 
         {
             attackStat = caster.GetStat(StatType.Attack);
             defenseStat = target.GetStat(StatType.Defense);
             
-           
-            int attackStageIndex = Mathf.Clamp(caster.AttackStage, -6, 6) + 6;
-            int defenseStageIndex = Mathf.Clamp(target.DefenseStage, -6, 6) + 6;
-
-            attackStat *= statStageModifiers[attackStageIndex];
-            defenseStat *= statStageModifiers[defenseStageIndex];
+            attackStat *= BattleConstants.GetStatStageMultiplier(caster.AttackStage);
+            defenseStat *= BattleConstants.GetStatStageMultiplier(target.DefenseStage);
         }
         else
         {
             attackStat = caster.GetStat(StatType.SpAttack);
             defenseStat = target.GetStat(StatType.SpDefense);
 
-            int attackStageIndex = Mathf.Clamp(caster.SpAttackStage, -6, 6) + 6;
-            int defenseStageIndex = Mathf.Clamp(target.SpDefenseStage, -6, 6) + 6;
-
-            attackStat *= statStageModifiers[attackStageIndex];
-            defenseStat *= statStageModifiers[defenseStageIndex];
+            attackStat *= BattleConstants.GetStatStageMultiplier(caster.SpAttackStage);
+            defenseStat *= BattleConstants.GetStatStageMultiplier(target.SpDefenseStage);
         }
 
-        float baseDamage = (((2f * level / 5f) + 2f) * power * (attackStat / defenseStat)  / 50f) + 2f;
+        float baseDamage = (((2f * level / 5f) + 2f) * power * (attackStat / defenseStat) / 50f) + 2f;
+        
         float modifier = 1.0f;
+        
         if (isCritical)
         {
-            modifier *= 1.5f;
+            modifier *= BattleConstants.CRITICAL_MULTIPLIER;
         }
 
-       
         if (caster.pokemon.type1 == move.elementType || caster.pokemon.type2 == move.elementType) 
         {
-            modifier *= 1.5f;
+            modifier *= BattleConstants.STAB_MULTIPLIER;
         }
 
         modifier *= typeEffectiveness;
         
-        modifier *= Random.Range(0.85f, 1.0f);
+        modifier *= Random.Range(BattleConstants.DAMAGE_RANDOM_MIN, BattleConstants.DAMAGE_RANDOM_MAX);
         
         int finalDamage = Mathf.FloorToInt(baseDamage * modifier);
 
-        if (typeEffectiveness == 0)
+        if (typeEffectiveness == BattleConstants.NO_EFFECT)
         {
             return (0, attackStat, defenseStat);
         }
-        return (Mathf.Max(1, finalDamage), attackStat, defenseStat);
+        
+        return (Mathf.Max(BattleConstants.MIN_DAMAGE, finalDamage), attackStat, defenseStat);
+    }
+    
+    private static float CalculateTypeEffectiveness(ElementType attackType, PokemonSO defender)
+    {
+        float effectiveness = GetTypeEffectiveness(attackType, defender.type1);
+        
+        if (defender.type2 != ElementType.None)
+        {
+            effectiveness *= GetTypeEffectiveness(attackType, defender.type2);
+        }
+        
+        return effectiveness;
     }
     
     private static float GetTypeEffectiveness(ElementType attackType, ElementType defenseType)
     {
         if (attackType == ElementType.None || defenseType == ElementType.None)
         {
-            return 1f;
+            return BattleConstants.NORMAL_EFFECTIVE;
         }
 
-       
         if (TypeChart.TryGetValue(attackType, out var attackMap))
         {
             if (attackMap.TryGetValue(defenseType, out float multiplier))
@@ -205,6 +190,18 @@ public static class BattleCalculator
             }
         }
 
-        return 1f;
+        return BattleConstants.NORMAL_EFFECTIVE;
+    }
+    
+    private static void LogStatInfo(StringBuilder log, PokemonStats caster, PokemonStats target, 
+        AttackMoveSO move, float finalAttack, float finalDefense)
+    {
+        string atkStatName = move.attackType == AttackType.Physical ? "Attack" : "Sp. Attack";
+        string defStatName = move.attackType == AttackType.Physical ? "Defense" : "Sp. Defense";
+        int atkStage = move.attackType == AttackType.Physical ? caster.AttackStage : caster.SpAttackStage;
+        int defStage = move.attackType == AttackType.Physical ? target.DefenseStage : target.SpDefenseStage;
+
+        log.AppendLine($"Caster's {atkStatName} (Stage {atkStage:+0;-#}): {finalAttack:F2}");
+        log.AppendLine($"Target's {defStatName} (Stage {defStage:+0;-#}): {finalDefense:F2}");
     }
 }

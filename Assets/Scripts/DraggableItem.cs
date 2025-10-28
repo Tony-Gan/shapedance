@@ -22,7 +22,7 @@ public class DraggableItem : MonoBehaviour
     private Mouse currentMouse;
 
     [Header("Dragging Physics")]
-    [SerializeField] private readonly float mouseDragSpeed = 15f; 
+    [SerializeField] private float mouseDragSpeed = 15f; 
     
     private readonly HashSet<Rigidbody2D> collidingBodies = new();
     private readonly HashSet<DraggableItem> triggeredKnockbacks = new();
@@ -31,7 +31,7 @@ public class DraggableItem : MonoBehaviour
 
     private LineRenderer lineRenderer;
     [Header("Visuals")]
-    [SerializeField] private readonly bool showLineWhileDragging = false;
+    [SerializeField] private bool showLineWhileDragging = false;
     private bool previousShowLineWhileDragging;
     private Vector3 dragStartPosition;
 

@@ -69,9 +69,19 @@ public enum StatType
     Defense,
     SpAttack,
     SpDefense,
+    Speed
+}
+
+public enum StageType
+{
+    Attack,
+    Defense,
+    SpAttack,
+    SpDefense,
     Speed,
     Accuracy,
-    Evasion
+    Evasion,
+    Critical
 }
 
 public enum PokemonNature

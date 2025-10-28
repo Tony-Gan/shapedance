@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 public class PokemonStats : MonoBehaviour
 {
+    #region Pokemon Base Info
     [Header("Pokemon")]
     public PokemonSO pokemon;
     public string alias;
@@ -12,7 +13,9 @@ public class PokemonStats : MonoBehaviour
 
     [Range(1, 100)]
     public int level = 5;
+    #endregion
 
+    #region EVs and IVs
     [Header("EV")]
     [Range(0, 252)]
     public int evHP;
@@ -40,35 +43,89 @@ public class PokemonStats : MonoBehaviour
     public int ivSpDefense;
     [Range(0, 31)]
     public int ivSpeed;
-    
+    #endregion
+
+    #region Current Status
     [Header("Current Status")]
     [SerializeField] private int _currentHP;
     [SerializeField] private int _currentEXP;
-    [SerializeField][Range(-6, 6)] private int _critStage = 0;
-    [SerializeField][Range(-6, 6)] private int _accuracyStage = 0;
-    [SerializeField][Range(-6, 6)] private int _evasionStage = 0;
-    [SerializeField][Range(-6, 6)] private int _attackStage = 0;
-    [SerializeField][Range(-6, 6)] private int _defenseStage = 0;
-    [SerializeField][Range(-6, 6)] private int _spAttackStage = 0;
-    [SerializeField][Range(-6, 6)] private int _spDefenseStage = 0;
-    [SerializeField][Range(-6, 6)] private int _speedStage = 0;
+    
+    [Header("Battle Stages")]
+    [SerializeField] private BattleStageSystem battleStages = new();
+    
+    public BattleStageSystem BattleStages => battleStages;
+    #endregion
 
+    #region Calculated Stats
     [Header("Calculated Stats")]
-    [SerializeField] private Dictionary<StatType, int> currentStats = new();
+    private Dictionary<StatType, int> currentStats = new();
 
     [Space(10)]
     [Header("Debug: Calculated Stats View")]
-    [SerializeField] private List<StatType>_debugStatKeys = new();
+    [SerializeField] private List<StatType> _debugStatKeys = new();
     [SerializeField] private List<int> _debugStatValues = new();
-    
-    
+    #endregion
+
+    #region Nature Modifier Lookup Table
+    private static readonly Dictionary<(PokemonNature, StatType), float> NatureModifiers = new()
+    {
+        // +Atk Natures
+        [(PokemonNature.Lonely, StatType.Attack)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Lonely, StatType.Defense)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Brave, StatType.Attack)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Brave, StatType.Speed)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Adamant, StatType.Attack)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Adamant, StatType.SpAttack)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Naughty, StatType.Attack)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Naughty, StatType.SpDefense)] = BattleConstants.NATURE_PENALTY,
+
+        // +Def Natures
+        [(PokemonNature.Bold, StatType.Defense)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Bold, StatType.Attack)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Relaxed, StatType.Defense)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Relaxed, StatType.Speed)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Impish, StatType.Defense)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Impish, StatType.SpAttack)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Lax, StatType.Defense)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Lax, StatType.SpDefense)] = BattleConstants.NATURE_PENALTY,
+
+        // +Speed Natures
+        [(PokemonNature.Timid, StatType.Speed)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Timid, StatType.Attack)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Hasty, StatType.Speed)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Hasty, StatType.Defense)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Jolly, StatType.Speed)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Jolly, StatType.SpAttack)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Naive, StatType.Speed)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Naive, StatType.SpDefense)] = BattleConstants.NATURE_PENALTY,
+
+        // +SpAtk Natures
+        [(PokemonNature.Modest, StatType.SpAttack)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Modest, StatType.Attack)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Mild, StatType.SpAttack)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Mild, StatType.Defense)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Quiet, StatType.SpAttack)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Quiet, StatType.Speed)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Rash, StatType.SpAttack)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Rash, StatType.SpDefense)] = BattleConstants.NATURE_PENALTY,
+
+        // +SpDef Natures
+        [(PokemonNature.Calm, StatType.SpDefense)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Calm, StatType.Attack)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Gentle, StatType.SpDefense)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Gentle, StatType.Defense)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Sassy, StatType.SpDefense)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Sassy, StatType.Speed)] = BattleConstants.NATURE_PENALTY,
+        [(PokemonNature.Careful, StatType.SpDefense)] = BattleConstants.NATURE_BOOST,
+        [(PokemonNature.Careful, StatType.SpAttack)] = BattleConstants.NATURE_PENALTY,
+    };
+    #endregion
+
+    #region Properties - HP and EXP
     public int CurrentHP
     {
         get => _currentHP;
-        set
-        {
-            _currentHP = Mathf.Clamp(value, 0, GetStat(StatType.HP));
-        }
+        set => _currentHP = Mathf.Clamp(value, 0, GetStat(StatType.HP));
     }
     
     public int CurrentEXP
@@ -76,125 +133,83 @@ public class PokemonStats : MonoBehaviour
         get => _currentEXP;
         set
         {
-            if (level >= 100)
+            if (level >= BattleConstants.MAX_LEVEL)
             {
-                _currentEXP = Mathf.Clamp(value, 0, 100);
+                _currentEXP = Mathf.Clamp(value, 0, BattleConstants.EXP_PER_LEVEL);
                 return;
             }
 
             _currentEXP = Mathf.Max(0, value);
 
-            while (_currentEXP >= 100 && level < 100)
+            while (_currentEXP >= BattleConstants.EXP_PER_LEVEL && level < BattleConstants.MAX_LEVEL)
             {
-                _currentEXP -= 100;
+                _currentEXP -= BattleConstants.EXP_PER_LEVEL;
                 LevelUp(); 
             }
         }
     }
-    
-    public int CritStage
-    {
-        get => _critStage;
-        set
-        {
-            _critStage = Mathf.Clamp(value, -6, 6);
-        }
-    }
-    
-    public int AccuracyStage
-    {
-        get => _accuracyStage;
-        set
-        {
-            _accuracyStage = Mathf.Clamp(value, -6, 6);
-        }
-    }
-    
-    public int EvasionStage
-    {
-        get => _evasionStage;
-        set
-        {
-            _evasionStage = Mathf.Clamp(value, -6, 6);
-        }
-    }
+    #endregion
 
+    #region Properties - Stage Access (Backward Compatible)
     public int AttackStage
     {
-        get => _attackStage;
-        set
-        {
-            _attackStage = Mathf.Clamp(value, -6, 6);
-        }
+        get => battleStages.GetStage(StageType.Attack);
+        set => battleStages.SetStage(StageType.Attack, value);
     }
     
     public int DefenseStage
     {
-        get => _defenseStage;
-        set
-        {
-            _defenseStage = Mathf.Clamp(value, -6, 6);
-        }
+        get => battleStages.GetStage(StageType.Defense);
+        set => battleStages.SetStage(StageType.Defense, value);
     }
     
     public int SpAttackStage
     {
-        get => _spAttackStage;
-        set
-        {
-            _spAttackStage = Mathf.Clamp(value, -6, 6);
-        }
+        get => battleStages.GetStage(StageType.SpAttack);
+        set => battleStages.SetStage(StageType.SpAttack, value);
     }
     
     public int SpDefenseStage
     {
-        get => _spDefenseStage;
-        set
-        {
-            _spDefenseStage = Mathf.Clamp(value, -6, 6);
-        }
+        get => battleStages.GetStage(StageType.SpDefense);
+        set => battleStages.SetStage(StageType.SpDefense, value);
     }
     
     public int SpeedStage
     {
-        get => _speedStage;
-        set
-        {
-            _speedStage = Mathf.Clamp(value, -6, 6);
-        }
+        get => battleStages.GetStage(StageType.Speed);
+        set => battleStages.SetStage(StageType.Speed, value);
     }
+    
+    public int AccuracyStage
+    {
+        get => battleStages.GetStage(StageType.Accuracy);
+        set => battleStages.SetStage(StageType.Accuracy, value);
+    }
+    
+    public int EvasionStage
+    {
+        get => battleStages.GetStage(StageType.Evasion);
+        set => battleStages.SetStage(StageType.Evasion, value);
+    }
+    
+    public int CritStage
+    {
+        get => battleStages.GetStage(StageType.Critical);
+        set => battleStages.SetStage(StageType.Critical, value);
+    }
+    #endregion
 
+    #region Public Methods
     public void TakeDamage(int damage)
     {
         if (damage < 0) return;
-
         CurrentHP -= damage; 
     }
     
     public bool IsFainted()
     {
         return CurrentHP == 0;
-    }
-
-
-    void Awake()
-    {
-        if (pokemon == null)
-        {
-            Debug.LogError("FATAL: No Pokemon Stats Found!", gameObject);
-
-            enabled = false;
-            return;
-        }
-
-        if (string.IsNullOrEmpty(alias))
-        {
-            alias = pokemon.pokemonNameCN;
-        }
-
-        RecalculateStats();
-        
-        CurrentHP = GetStat(StatType.HP);
     }
 
     public int GetStat(StatType stat)
@@ -220,19 +235,18 @@ public class PokemonStats : MonoBehaviour
         }
     }
 
+    public MoveBaseSO[] GetMoves()
+    {
+        return moves;
+    }
+    #endregion
+
+    #region Context Menu Commands
     [ContextMenu("Rest (Heal and Reset Stages)")]
     public void Rest()
     {
         CurrentHP = GetStat(StatType.HP);
-
-        CritStage = 0;
-        AccuracyStage = 0;
-        EvasionStage = 0;
-        AttackStage = 0;
-        DefenseStage = 0;
-        SpAttackStage = 0;
-        SpDefenseStage = 0;
-        SpeedStage = 0;
+        battleStages.ResetAll();
         
         Debug.Log($"[Debug]: {alias} has been fully rested. HP restored and stages reset.", this);
     }
@@ -240,9 +254,9 @@ public class PokemonStats : MonoBehaviour
     [ContextMenu("Level Up (+1)")]
     public void LevelUp()
     {
-        if (level >= 100)
+        if (level >= BattleConstants.MAX_LEVEL)
         {
-            Debug.Log($"[Debug]: {alias} is already at max level (100).", this);
+            Debug.Log($"[Debug]: {alias} is already at max level ({BattleConstants.MAX_LEVEL}).", this);
             return;
         }
 
@@ -292,7 +306,27 @@ public class PokemonStats : MonoBehaviour
         UnityEditor.EditorUtility.SetDirty(this);
         #endif
     }
-    
+    #endregion
+
+    #region Private Methods
+    void Awake()
+    {
+        if (pokemon == null)
+        {
+            Debug.LogError("FATAL: No Pokemon Stats Found!", gameObject);
+            enabled = false;
+            return;
+        }
+
+        if (string.IsNullOrEmpty(alias))
+        {
+            alias = pokemon.pokemonNameCN;
+        }
+
+        RecalculateStats();
+        CurrentHP = GetStat(StatType.HP);
+    }
+
     private void UpdateDebugLists()
     {
         _debugStatKeys ??= new();
@@ -324,104 +358,9 @@ public class PokemonStats : MonoBehaviour
 
     private float GetNatureModifier(StatType stat)
     {
-        switch (nature)
-        {
-            // +Atk
-            case PokemonNature.Lonely:
-                if (stat == StatType.Attack) return 1.1f;
-                if (stat == StatType.Defense) return 0.9f;
-                break;
-            case PokemonNature.Brave:
-                if (stat == StatType.Attack) return 1.1f;
-                if (stat == StatType.Speed) return 0.9f;
-                break;
-            case PokemonNature.Adamant:
-                if (stat == StatType.Attack) return 1.1f;
-                if (stat == StatType.SpAttack) return 0.9f;
-                break;
-            case PokemonNature.Naughty:
-                if (stat == StatType.Attack) return 1.1f;
-                if (stat == StatType.SpDefense) return 0.9f;
-                break;
-
-            // +Def
-            case PokemonNature.Bold:
-                if (stat == StatType.Defense) return 1.1f;
-                if (stat == StatType.Attack) return 0.9f;
-                break;
-            case PokemonNature.Relaxed:
-                if (stat == StatType.Defense) return 1.1f;
-                if (stat == StatType.Speed) return 0.9f;
-                break;
-            case PokemonNature.Impish:
-                if (stat == StatType.Defense) return 1.1f;
-                if (stat == StatType.SpAttack) return 0.9f;
-                break;
-            case PokemonNature.Lax:
-                if (stat == StatType.Defense) return 1.1f;
-                if (stat == StatType.SpDefense) return 0.9f;
-                break;
-
-            // +Speed
-            case PokemonNature.Timid:
-                if (stat == StatType.Speed) return 1.1f;
-                if (stat == StatType.Attack) return 0.9f;
-                break;
-            case PokemonNature.Hasty:
-                if (stat == StatType.Speed) return 1.1f;
-                if (stat == StatType.Defense) return 0.9f;
-                break;
-            case PokemonNature.Jolly:
-                if (stat == StatType.Speed) return 1.1f;
-                if (stat == StatType.SpAttack) return 0.9f;
-                break;
-            case PokemonNature.Naive:
-                if (stat == StatType.Speed) return 1.1f;
-                if (stat == StatType.SpDefense) return 0.9f;
-                break;
-
-            // +SpAtk
-            case PokemonNature.Modest:
-                if (stat == StatType.SpAttack) return 1.1f;
-                if (stat == StatType.Attack) return 0.9f;
-                break;
-            case PokemonNature.Mild:
-                if (stat == StatType.SpAttack) return 1.1f;
-                if (stat == StatType.Defense) return 0.9f;
-                break;
-            case PokemonNature.Quiet:
-                if (stat == StatType.SpAttack) return 1.1f;
-                if (stat == StatType.Speed) return 0.9f;
-                break;
-            case PokemonNature.Rash:
-                if (stat == StatType.SpAttack) return 1.1f;
-                if (stat == StatType.SpDefense) return 0.9f;
-                break;
-
-            // +SpDef
-            case PokemonNature.Calm:
-                if (stat == StatType.SpDefense) return 1.1f;
-                if (stat == StatType.Attack) return 0.9f;
-                break;
-            case PokemonNature.Gentle:
-                if (stat == StatType.SpDefense) return 1.1f;
-                if (stat == StatType.Defense) return 0.9f;
-                break;
-            case PokemonNature.Sassy:
-                if (stat == StatType.SpDefense) return 1.1f;
-                if (stat == StatType.Speed) return 0.9f;
-                break;
-            case PokemonNature.Careful:
-                if (stat == StatType.SpDefense) return 1.1f;
-                if (stat == StatType.SpAttack) return 0.9f;
-                break;
-        }
-
-        return 1.0f;
+        return NatureModifiers.TryGetValue((nature, stat), out float modifier) 
+            ? modifier 
+            : BattleConstants.NATURE_NEUTRAL;
     }
-
-    public MoveBaseSO[] GetMoves()
-    {
-        return moves;
-    }
+    #endregion
 }

@@ -171,15 +171,18 @@ public class TargetingManager : MonoBehaviour
             return;
         }
         
+        if (currentMouse.leftButton.wasPressedThisFrame || currentMouse.rightButton.wasPressedThisFrame)
+        {
+            inputConsumedThisFrame = true;
+        }
+        
         if (currentMouse.leftButton.wasPressedThisFrame)
         {
-            inputConsumedThisFrame = true; 
             HandleTargetingClick();
         }
 
         if (currentMouse.rightButton.wasPressedThisFrame)
         {
-            inputConsumedThisFrame = true;
             currentMove.targetingStrategy.HandleRightClick(this, GetMouseWorldPos(), Physics2D.Raycast(GetMouseWorldPos(), Vector2.zero));
         }
     }
