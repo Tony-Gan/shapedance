@@ -35,6 +35,11 @@ public class DraggableItem : MonoBehaviour
     private bool previousShowLineWhileDragging;
     private Vector3 dragStartPosition;
 
+    [Header("Movement Distance Tracking")]
+    private float totalMovementDistance = 0f;
+    private Vector3 lastFramePosition;
+    private const float MOVEMENT_COST_DISTANCE = 10f;
+
     private SpriteRenderer sr; 
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color highlightColor = Color.yellow;
@@ -211,6 +216,12 @@ public class DraggableItem : MonoBehaviour
 
     private void StartDrag()
     {
+        if (pokemonStats != null && !pokemonStats.CanUseActionPoint(1))
+        {
+            Debug.Log($"[Info]: {pokemonStats.alias} has no action points left!", this);
+            return;
+        }
+
         if (TargetingManager.Instance != null)
         {
             TargetingManager.Instance.CancelTargeting();
@@ -219,19 +230,21 @@ public class DraggableItem : MonoBehaviour
         SelectionManager.SetSelected(this);
 
         isDragging = true;
-        
+
         rb.bodyType = RigidbodyType2D.Dynamic;
-        rb.linearVelocity = Vector2.zero; 
-        
+        rb.linearVelocity = Vector2.zero;
+
         dragStartPosition = transform.position;
+        totalMovementDistance = 0f;
+        lastFramePosition = transform.position;
 
         DetectInitialContacts();
-        
+
         triggeredKnockbacks.Clear();
 
         lineRenderer.SetPosition(0, dragStartPosition);
         lineRenderer.SetPosition(1, dragStartPosition);
-        
+
         if (showLineWhileDragging)
         {
             lineRenderer.enabled = true;
@@ -244,7 +257,14 @@ public class DraggableItem : MonoBehaviour
         lineRenderer.enabled = false;
         rb.linearVelocity = Vector2.zero;
         rb.bodyType = RigidbodyType2D.Kinematic;
-        
+
+        if (pokemonStats != null && totalMovementDistance > 0.01f)
+        {
+            int actionPointCost = Mathf.CeilToInt(totalMovementDistance / MOVEMENT_COST_DISTANCE);
+            pokemonStats.UseActionPoint(actionPointCost);
+            Debug.Log($"[Info]: {pokemonStats.alias} moved {totalMovementDistance:F2} units, consuming {actionPointCost} action point(s).", this);
+        }
+
         collidingBodies.Clear();
         triggeredKnockbacks.Clear();
     }
@@ -312,15 +332,20 @@ public class DraggableItem : MonoBehaviour
     {
         if (isDragging)
         {
+            Vector3 currentPosition = transform.position;
+            float frameDelta = Vector3.Distance(lastFramePosition, currentPosition);
+            totalMovementDistance += frameDelta;
+            lastFramePosition = currentPosition;
+
             Vector3 desiredPos = GetMouseWorldPos() + offset;
             Vector2 moveDirection = (Vector2)desiredPos - rb.position;
-            
+
             if (collidingBodies.Count > 0)
             {
                 moveDirection = FilterMovementDirection(moveDirection);
             }
-            
-            rb.linearVelocity = moveDirection * mouseDragSpeed; 
+
+            rb.linearVelocity = moveDirection * mouseDragSpeed;
         }
     }
 

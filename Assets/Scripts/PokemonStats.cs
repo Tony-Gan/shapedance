@@ -49,11 +49,17 @@ public class PokemonStats : MonoBehaviour
     [Header("Current Status")]
     [SerializeField] private int _currentHP;
     [SerializeField] private int _currentEXP;
-    
+
     [Header("Battle Stages")]
     [SerializeField] private BattleStageSystem battleStages = new();
-    
+
+    [Header("Action Points")]
+    [SerializeField] private int maxActionPoints = 5;
+    [SerializeField] private int currentActionPoints = 5;
+
     public BattleStageSystem BattleStages => battleStages;
+    public int MaxActionPoints => maxActionPoints;
+    public int CurrentActionPoints => currentActionPoints;
     #endregion
 
     #region Calculated Stats
@@ -188,6 +194,37 @@ public class PokemonStats : MonoBehaviour
     public MoveBaseSO[] GetMoves()
     {
         return moves;
+    }
+
+    public bool CanUseActionPoint(int cost = 1)
+    {
+        return currentActionPoints >= cost;
+    }
+
+    public bool UseActionPoint(int cost = 1)
+    {
+        if (!CanUseActionPoint(cost))
+        {
+            return false;
+        }
+        currentActionPoints -= cost;
+        NotifyActionPointsChanged();
+        return true;
+    }
+
+    [ContextMenu("Reset Action Points")]
+    public void ResetActionPoints()
+    {
+        currentActionPoints = maxActionPoints;
+        NotifyActionPointsChanged();
+        Debug.Log($"[Debug]: {alias}'s action points have been reset to {maxActionPoints}.", this);
+    }
+
+    public event System.Action OnActionPointsChanged;
+
+    private void NotifyActionPointsChanged()
+    {
+        OnActionPointsChanged?.Invoke();
     }
     #endregion
 

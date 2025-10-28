@@ -21,16 +21,34 @@ public class MovesDisplayUI : MonoBehaviour
     void OnDestroy()
     {
         SelectionManager.OnSelectionChanged -= HandleSelectionChanged;
+        if (currentSelectedPokemon != null)
+        {
+            currentSelectedPokemon.OnActionPointsChanged -= OnActionPointsChanged;
+        }
     }
 
     private void HandleSelectionChanged(DraggableItem selectedItem)
     {
+        if (currentSelectedPokemon != null)
+        {
+            currentSelectedPokemon.OnActionPointsChanged -= OnActionPointsChanged;
+        }
+
         currentSelectedPokemon = null;
         if (selectedItem != null)
         {
             currentSelectedPokemon = selectedItem.GetComponent<PokemonStats>();
+            if (currentSelectedPokemon != null)
+            {
+                currentSelectedPokemon.OnActionPointsChanged += OnActionPointsChanged;
+            }
         }
         UpdateMoveButtons(currentSelectedPokemon);
+    }
+
+    private void OnActionPointsChanged()
+    {
+        UpdateButtonStates();
     }
 
     private void UpdateMoveButtons(PokemonStats pokemon)
@@ -75,6 +93,27 @@ public class MovesDisplayUI : MonoBehaviour
                     Debug.LogWarning("TargetingManager not found or no pokemon selected.");
                 }
             });
+        }
+
+        UpdateButtonStates();
+    }
+
+    private void UpdateButtonStates()
+    {
+        if (currentSelectedPokemon == null)
+        {
+            return;
+        }
+
+        bool hasActionPoints = currentSelectedPokemon.CanUseActionPoint(1);
+
+        foreach (Transform child in buttonContainer)
+        {
+            Button button = child.GetComponent<Button>();
+            if (button != null)
+            {
+                button.interactable = hasActionPoints;
+            }
         }
     }
 }

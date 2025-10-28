@@ -244,9 +244,18 @@ public class TargetingManager : MonoBehaviour
     public void ExecuteMove(PokemonStats caster, PokemonStats target, MoveBaseSO move)
     {
         if (target == null || caster == null || move == null) return;
-        
+
+        if (!caster.CanUseActionPoint(1))
+        {
+            Debug.Log($"[Info]: {caster.alias} has no action points left to use {move.moveNameCN}!", caster);
+            return;
+        }
+
+        caster.UseActionPoint(1);
+        Debug.Log($"[Info]: {caster.alias} used {move.moveNameCN}, consuming 1 action point.", caster);
+
         int damageDealt = 0;
-        
+
         if (move is AttackMoveSO attackMove)
         {
             damageDealt = BattleCalculator.HandleAttack(caster, target, attackMove);
