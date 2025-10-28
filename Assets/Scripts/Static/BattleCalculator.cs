@@ -31,12 +31,12 @@ public static class BattleCalculator
         };
     }
 
-    public static void HandleAttack(PokemonStats caster, PokemonStats target, AttackMoveSO move)
+    public static int HandleAttack(PokemonStats caster, PokemonStats target, AttackMoveSO move)
     {
         if (!CalculateHit(caster, target, move))
         {
             Debug.Log($"[Attack Result]: {caster.alias}'s {move.moveName} {BattleConstants.MSG_MISSED} {target.alias}!");
-            return;
+            return 0;
         }
 
         StringBuilder logBuilder = new();
@@ -80,29 +80,31 @@ public static class BattleCalculator
         }
 
         Debug.Log(logBuilder.ToString());
+        
+        return damage;
     }
 
     private static bool CalculateHit(PokemonStats caster, PokemonStats target, AttackMoveSO move)
     {
-        // 🔥 关键修复：使用move的accuracy字段
-        float moveBaseAccuracy = move.accuracy;
-        
-        if (moveBaseAccuracy >= BattleConstants.NEVER_MISS_ACCURACY)
+        if (move.ignoreAccuracyEvasion)
         {
             return true;
         }
         
-        int totalAccuracyStage = caster.AccuracyStage + move.accuracyLevel - target.EvasionStage;
+        float moveBaseAccuracy = move.accuracy;
+        
+        int totalAccuracyStage = caster.BattleStages.GetStage(StageType.Accuracy) - target.BattleStages.GetStage(StageType.Evasion);
         
         float modifier = BattleConstants.GetAccuracyStageMultiplier(totalAccuracyStage);
         float finalAccuracy = moveBaseAccuracy * modifier;
         
+        // 命中判定
         return Random.Range(0f, 100f) < finalAccuracy;
     }
 
     private static bool CalculateCritical(PokemonStats caster, AttackMoveSO move)
     {
-        int totalCritStage = caster.CritStage + move.criticalLevel;
+        int totalCritStage = caster.BattleStages.GetStage(StageType.Critical) + move.criticalLevel;
         totalCritStage = Mathf.Clamp(totalCritStage, 0, BattleConstants.MAX_CRIT_STAGE);
         
         float critChance = BattleConstants.GetCriticalHitRate(totalCritStage);
@@ -123,16 +125,16 @@ public static class BattleCalculator
             attackStat = caster.GetStat(StatType.Attack);
             defenseStat = target.GetStat(StatType.Defense);
             
-            attackStat *= BattleConstants.GetStatStageMultiplier(caster.AttackStage);
-            defenseStat *= BattleConstants.GetStatStageMultiplier(target.DefenseStage);
+            attackStat *= BattleConstants.GetStatStageMultiplier(caster.BattleStages.GetStage(StageType.Attack));
+            defenseStat *= BattleConstants.GetStatStageMultiplier(target.BattleStages.GetStage(StageType.Defense));
         }
         else
         {
             attackStat = caster.GetStat(StatType.SpAttack);
             defenseStat = target.GetStat(StatType.SpDefense);
 
-            attackStat *= BattleConstants.GetStatStageMultiplier(caster.SpAttackStage);
-            defenseStat *= BattleConstants.GetStatStageMultiplier(target.SpDefenseStage);
+            attackStat *= BattleConstants.GetStatStageMultiplier(caster.BattleStages.GetStage(StageType.SpAttack));
+            defenseStat *= BattleConstants.GetStatStageMultiplier(target.BattleStages.GetStage(StageType.SpDefense));
         }
 
         float baseDamage = (((2f * level / 5f) + 2f) * power * (attackStat / defenseStat) / 50f) + 2f;
@@ -150,7 +152,6 @@ public static class BattleCalculator
         }
 
         modifier *= typeEffectiveness;
-        
         modifier *= Random.Range(BattleConstants.DAMAGE_RANDOM_MIN, BattleConstants.DAMAGE_RANDOM_MAX);
         
         int finalDamage = Mathf.FloorToInt(baseDamage * modifier);
@@ -198,8 +199,12 @@ public static class BattleCalculator
     {
         string atkStatName = move.attackType == AttackType.Physical ? "Attack" : "Sp. Attack";
         string defStatName = move.attackType == AttackType.Physical ? "Defense" : "Sp. Defense";
-        int atkStage = move.attackType == AttackType.Physical ? caster.AttackStage : caster.SpAttackStage;
-        int defStage = move.attackType == AttackType.Physical ? target.DefenseStage : target.SpDefenseStage;
+        
+        StageType atkStageType = move.attackType == AttackType.Physical ? StageType.Attack : StageType.SpAttack;
+        StageType defStageType = move.attackType == AttackType.Physical ? StageType.Defense : StageType.SpDefense;
+        
+        int atkStage = caster.BattleStages.GetStage(atkStageType);
+        int defStage = target.BattleStages.GetStage(defStageType);
 
         log.AppendLine($"Caster's {atkStatName} (Stage {atkStage:+0;-#}): {finalAttack:F2}");
         log.AppendLine($"Target's {defStatName} (Stage {defStage:+0;-#}): {finalDefense:F2}");

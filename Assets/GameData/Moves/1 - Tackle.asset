@@ -16,10 +16,11 @@ MonoBehaviour:
   moveName: Tackle
   moveNameCN: "\u649E\u51FB"
   pp: 10
+  accuracy: 100
+  ignoreAccuracyEvasion: 0
   targetingStrategy: {fileID: 11400000, guid: 855fd0a5fe1ae1047bcc102962b911c1, type: 2}
   additionalEffects: []
   attackType: 0
   elementType: 1
   power: 40
-  accuracyLevel: 0
   criticalLevel: 0

@@ -57,9 +57,39 @@ public enum StatusCondition
     None,
     Burn,
     Poison,
+    BadlyPoisoned,
     Paralyze,
     Freeze,
-    Sleep
+    Sleep,
+    Confusion
+}
+
+public enum WeatherType
+{
+    None,
+    Sunny,
+    Rain,
+    Sandstorm,
+    Hail, 
+    HarshSunlight,
+    HeavyRain,
+    StrongWinds 
+}
+
+public enum TerrainType
+{
+    None,
+    Electric,
+    Grassy,
+    Misty,
+    Psychic
+}
+
+public enum HealType
+{
+    FixedAmount,
+    PercentageOfMaxHP,
+    PercentageOfDamageDealt
 }
 
 public enum StatType

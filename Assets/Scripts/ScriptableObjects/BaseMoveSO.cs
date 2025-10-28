@@ -16,6 +16,11 @@ public abstract class MoveBaseSO : ScriptableObject
     public string moveNameCN;
     public int pp;
 
+    [Header("Accuracy")]
+    [Range(0, 100)]
+    public int accuracy = 100;
+    public bool ignoreAccuracyEvasion = false;
+
     [Header("Targeting")]
     public TargetingStrategySO targetingStrategy;
 

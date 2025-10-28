@@ -23,7 +23,7 @@ public class CameraController : MonoBehaviour
         mainCamera = GetComponent<Camera>();
         if (!mainCamera.orthographic)
         {
-            Debug.LogError("CameraController 仅适用于 Orthographic (正交) 摄影机。");
+            Debug.LogError("CameraController only available for Orthographic Camera.");
             enabled = false;
         }
     }

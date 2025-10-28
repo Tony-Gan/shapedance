@@ -131,8 +131,13 @@ public class DraggableItem : MonoBehaviour
         if (currentMouse == null) return;
 
         HandleLineVisibility();
-        HandleInput();
         UpdateLinePosition();
+    }
+    
+    void LateUpdate()
+    {
+        if (currentMouse == null) return;
+        HandleInput();
     }
 
     private void HandleLineVisibility()

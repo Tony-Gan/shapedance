@@ -245,14 +245,17 @@ public class TargetingManager : MonoBehaviour
     {
         if (target == null || caster == null || move == null) return;
         
+        int damageDealt = 0;
+        
         if (move is AttackMoveSO attackMove)
         {
-            BattleCalculator.HandleAttack(caster, target, attackMove);
+            damageDealt = BattleCalculator.HandleAttack(caster, target, attackMove);
         }
         else
         {
             Debug.LogWarning($"Move {move.moveName} ({move.moveNameCN}) is not an AttackMove. Calculation logic not implemented.");
         }
+
         if (!target.IsFainted())
         {
             if (move.additionalEffects != null && move.additionalEffects.Count > 0)
@@ -261,6 +264,14 @@ public class TargetingManager : MonoBehaviour
                 {
                     if (effect != null)
                     {
+                        if (effect is HealEffectSO healEffect && healEffect.healType == HealType.PercentageOfDamageDealt)
+                        {
+                            healEffect.SetDamageContext(damageDealt);
+                        }
+                        else if (effect is RecoilEffectSO recoilEffect)
+                        {
+                            recoilEffect.SetDamageContext(damageDealt);
+                        }
                         effect.Execute(caster, target);
                     }
                 }

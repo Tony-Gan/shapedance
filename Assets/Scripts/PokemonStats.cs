@@ -150,56 +150,6 @@ public class PokemonStats : MonoBehaviour
     }
     #endregion
 
-    #region Properties - Stage Access (Backward Compatible)
-    public int AttackStage
-    {
-        get => battleStages.GetStage(StageType.Attack);
-        set => battleStages.SetStage(StageType.Attack, value);
-    }
-    
-    public int DefenseStage
-    {
-        get => battleStages.GetStage(StageType.Defense);
-        set => battleStages.SetStage(StageType.Defense, value);
-    }
-    
-    public int SpAttackStage
-    {
-        get => battleStages.GetStage(StageType.SpAttack);
-        set => battleStages.SetStage(StageType.SpAttack, value);
-    }
-    
-    public int SpDefenseStage
-    {
-        get => battleStages.GetStage(StageType.SpDefense);
-        set => battleStages.SetStage(StageType.SpDefense, value);
-    }
-    
-    public int SpeedStage
-    {
-        get => battleStages.GetStage(StageType.Speed);
-        set => battleStages.SetStage(StageType.Speed, value);
-    }
-    
-    public int AccuracyStage
-    {
-        get => battleStages.GetStage(StageType.Accuracy);
-        set => battleStages.SetStage(StageType.Accuracy, value);
-    }
-    
-    public int EvasionStage
-    {
-        get => battleStages.GetStage(StageType.Evasion);
-        set => battleStages.SetStage(StageType.Evasion, value);
-    }
-    
-    public int CritStage
-    {
-        get => battleStages.GetStage(StageType.Critical);
-        set => battleStages.SetStage(StageType.Critical, value);
-    }
-    #endregion
-
     #region Public Methods
     public void TakeDamage(int damage)
     {
@@ -279,11 +229,13 @@ public class PokemonStats : MonoBehaviour
 
         bool hasOldHP = currentStats.TryGetValue(StatType.HP, out int oldMaxHP);
 
+        // HP 计算（特殊公式）
         int hpBase = pokemon.baseHP;
         int hpEV = Mathf.FloorToInt(evHP / 4f);
         int hpCalc = Mathf.FloorToInt((2 * hpBase + ivHP + hpEV) * level / 100f) + level + 10;
         currentStats[StatType.HP] = hpCalc;
 
+        // 其他属性计算
         currentStats[StatType.Attack] = CalculateStat(StatType.Attack, pokemon.baseAttack, ivAttack, evAttack);
         currentStats[StatType.Defense] = CalculateStat(StatType.Defense, pokemon.baseDefense, ivDefense, evDefense);
         currentStats[StatType.SpAttack] = CalculateStat(StatType.SpAttack, pokemon.baseSpAttack, ivSpAttack, evSpAttack);
@@ -292,6 +244,7 @@ public class PokemonStats : MonoBehaviour
 
         int newMaxHP = currentStats[StatType.HP];
 
+        // 升级时调整当前HP
         if (hasOldHP && newMaxHP != oldMaxHP)
         {
             int hpDelta = newMaxHP - oldMaxHP;
@@ -356,6 +309,9 @@ public class PokemonStats : MonoBehaviour
         return calculatedStat;
     }
 
+    /// <summary>
+    /// ✅ 优化：使用查找表而不是巨大的 switch-case
+    /// </summary>
     private float GetNatureModifier(StatType stat)
     {
         return NatureModifiers.TryGetValue((nature, stat), out float modifier) 

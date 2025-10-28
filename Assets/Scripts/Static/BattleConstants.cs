@@ -52,8 +52,6 @@ public static class BattleConstants
 
     #region Accuracy System
     public const float DEFAULT_ACCURACY = 100f;
-    
-    public const float NEVER_MISS_ACCURACY = 100f;
     #endregion
 
     #region Type Effectiveness
